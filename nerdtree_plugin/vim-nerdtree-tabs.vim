@@ -10,6 +10,11 @@ if !exists('g:nerdtree_tabs_open_on_console_startup')
   let g:nerdtree_tabs_open_on_console_startup = 0
 endif
 
+" do not open NERDTree if vim starts in diff mode
+if !exists('g:nerdtree_tabs_no_startup_for_diff')
+    let g:nerdtree_tabs_no_startup_for_diff = 1
+endif
+
 " On startup - focus NERDTree when opening a directory, focus the file if
 " editing a specified file
 if !exists('g:nerdtree_tabs_smart_startup_focus')
@@ -193,7 +198,12 @@ fun! s:NERDTreeUnfocus()
   " back to this tab
   let t:NERDTreeTabLastWindow = winnr()
   if s:IsCurrentWindowNERDTree()
-    wincmd w
+    let l:winNum = s:NextNormalWindow()
+    if l:winNum != -1
+      exec l:winNum.'wincmd w'
+    else
+      wincmd w
+    endif
   endif
 endfun
 
@@ -219,6 +229,35 @@ fun! s:ShouldFocusBeOnNERDTreeAfterStartup()
 endfun
 
 " === utility functions ===
+
+" find next window with a normal buffer
+fun! s:NextNormalWindow()
+  let l:i = 1
+  while(l:i <= winnr('$'))
+    let l:buf = winbufnr(l:i)
+
+    " skip unlisted buffers
+    if buflisted(l:buf) == 0
+      let l:i = l:i + 1
+      continue
+    endif
+
+    " skip un-modifiable buffers
+    if getbufvar(l:buf, '&modifiable') != 1
+      let l:i = l:i + 1
+      continue
+    endif
+
+    " skip temporary buffers with buftype set
+    if empty(getbufvar(l:buf, "&buftype")) != 1
+      let l:i = l:i + 1
+      continue
+    endif
+
+    return l:i
+  endwhile
+  return -1
+endfun
 
 " check if NERDTree is open in current tab
 fun! s:IsNERDTreeOpenInCurrentTab()
@@ -388,6 +427,11 @@ fun! s:VimEnterHandler()
 
   let l:open_nerd_tree_on_startup = (g:nerdtree_tabs_open_on_console_startup && !has('gui_running')) ||
                                   \ (g:nerdtree_tabs_open_on_gui_startup && has('gui_running'))
+
+  if g:nerdtree_tabs_no_startup_for_diff && &diff
+      let l:open_nerd_tree_on_startup = 0
+  endif
+
   " this makes sure that globally_active is true when using 'gvim .'
   let s:nerdtree_globally_active = l:open_nerd_tree_on_startup
 
