@@ -437,9 +437,9 @@ fun! s:LoadPlugin()
 
   augroup NERDTreeTabs
     autocmd!
-    autocmd VimEnter * call <SID>VimEnterHandler()
-    autocmd TabEnter * call <SID>TabEnterHandler()
-    autocmd TabLeave * call <SID>TabLeaveHandler()
+    autocmd VimEnter * nested call <SID>VimEnterHandler()
+    autocmd TabEnter * nested call <SID>TabEnterHandler()
+    autocmd TabLeave * nested call <SID>TabLeaveHandler()
     autocmd WinEnter * nested call <SID>WinEnterHandler()
     autocmd WinLeave * call <SID>WinLeaveHandler()
     autocmd BufWinEnter * call <SID>BufWinEnterHandler()
